@@ -1,75 +1,107 @@
 export default () => {
+  const usePostTweetModal = () => useState("post_tweet_modal", () => false);
+  const useReplyTweet = () => useState("reply_tweet", () => null);
 
-    const usePostTweetModal = () => useState('post_tweet_modal', () => false)
-    const useReplyTweet = () => useState('reply_tweet', () => null)
+  const closePostTweetModal = () => {
+    const postTweetModal = usePostTweetModal();
+    postTweetModal.value = false;
+  };
 
-    const closePostTweetModal = () => {
-        const postTweetModal = usePostTweetModal()
-        postTweetModal.value = false
-    }
+  const setReplyTo = (tweet) => {
+    const replyTweet = useReplyTweet();
+    replyTweet.value = tweet;
+  };
 
-    const setReplyTo = (tweet) => {
-        const replyTweet = useReplyTweet()
-        replyTweet.value = tweet
-    }
+  const openPostTweetModal = (tweet = null) => {
+    const postTweetModal = usePostTweetModal();
+    postTweetModal.value = true;
 
-    const openPostTweetModal = (tweet = null) => {
-        const postTweetModal = usePostTweetModal()
-        postTweetModal.value = true
+    setReplyTo(tweet);
+  };
 
-        setReplyTo(tweet)
-    }
+  const postTweet = (formData) => {
+    const form = new FormData();
 
-    const postTweet = (formData) => {
-        const form = new FormData()
+    form.append("text", formData.text);
+    form.append("replyTo", formData.replyTo);
 
-        form.append('text', formData.text)
-        form.append('replyTo', formData.replyTo)
+    formData.mediaFiles.forEach((mediaFile, index) => {
+      form.append("media_file_" + index, mediaFile);
+    });
 
-        formData.mediaFiles.forEach((mediaFile, index) => {
-            form.append('media_file_' + index, mediaFile)
-        })
+    return useFetchApi("/api/user/tweets", {
+      method: "POST",
+      body: form,
+    });
+  };
 
-        return useFetchApi('/api/user/tweets', {
-            method: 'POST',
-            body: form
-        })
-    }
+  const getTweets = (params = {}) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await useFetchApi("/api/tweets", {
+          method: "GET",
+          params,
+        });
+        console.log(response);
 
-    const getTweets = (params = {}) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const response = await useFetchApi('/api/tweets', {
-                    method: 'GET',
-                    params
-                })
+        resolve(response);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
 
-                resolve(response)
-            } catch (error) {
-                reject(error)
-            }
-        })
-    }
+  const disLikeTweet = (body = {}) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await useFetchApi("/api/likes/like", {
+          method: "DELETE",
+          body,
+        });
+        resolve(response);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  };
 
-    const getTweetById = (tweetId) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const response = await useFetchApi(`/api/tweets/${tweetId}`)
+  const likeTweet = (body = {}) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await useFetchApi("/api/likes/like", {
+          method: "POST",
+          body,
+        });
+        resolve(response);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  };
 
-                resolve(response)
-            } catch (error) {
-                reject(error)
-            }
-        })
-    }
+  const getTweetById = (tweetId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await useFetchApi(`/api/tweets/${tweetId}`);
 
-    return {
-        postTweet,
-        getTweets,
-        getTweetById,
-        closePostTweetModal,
-        usePostTweetModal,
-        openPostTweetModal,
-        useReplyTweet
-    }
-}
+        resolve(response);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  return {
+    postTweet,
+    getTweets,
+    getTweetById,
+    closePostTweetModal,
+    usePostTweetModal,
+    openPostTweetModal,
+    useReplyTweet,
+    likeTweet,
+    disLikeTweet,
+  };
+};

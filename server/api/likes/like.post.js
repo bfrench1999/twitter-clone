@@ -4,11 +4,9 @@ const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
   // Assuming the user is authenticated and their ID is in the context
-  //   const userId = event.context?.auth?.user?.id;
-
+  const userId = event.context?.auth?.user?.id;
   // Extract tweetId from the request
-  const { tweetId, userId } = await useBody(event);
-  console.log(tweetId, userId);
+  const { tweetId } = await useBody(event);
 
   // Validate tweetId and userId
   if (!tweetId || !userId) {
@@ -22,6 +20,18 @@ export default defineEventHandler(async (event) => {
 
   if (!tweet) {
     return { error: "Tweet not found." };
+  }
+
+  // Check if the user has already liked the tweet
+  const existingLike = await prisma.like.findFirst({
+    where: {
+      userId: userId,
+      tweetId: tweetId,
+    },
+  });
+
+  if (existingLike) {
+    return { error: "You have already liked this tweet." };
   }
 
   // Create like

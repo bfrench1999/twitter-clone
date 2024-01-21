@@ -3,6 +3,7 @@
 
 
         <TweetItemHeader :tweet="props.tweet" />
+        
 
 
         <div :class="tweetBodyWrapper">
